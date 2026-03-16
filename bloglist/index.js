@@ -1,4 +1,5 @@
 require('dotenv').config()
+const logger = require('./utils/logger')
 const express = require('express')
 const mongoose = require('mongoose')
 
@@ -36,7 +37,6 @@ app.get('/api/blogs', (request, response) => {
 app.post('/api/blogs', (request, response) => {
   const body = request.body
 
-  console.log("body: ",body);
   const blog = new Blog({
     title: body.title,
     author: body.author,
@@ -51,5 +51,5 @@ app.post('/api/blogs', (request, response) => {
 
 const PORT = process.env.PORT || 3003
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`)
+  logger.info(`Server running on port ${PORT}`)
 })
