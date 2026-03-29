@@ -22,11 +22,11 @@ const initialBlogs = [
     }
 ]
 
-beforeEach(async() =>{
+beforeEach(async () => {
     await Blog.deleteMany({})
-    let blogObject =  new Blog(initialBlogs[0])
+    let blogObject = new Blog(initialBlogs[0])
     await blogObject.save()
-    blogObject =  new Blog(initialBlogs[1])
+    blogObject = new Blog(initialBlogs[1])
     await blogObject.save()
 })
 
@@ -37,24 +37,48 @@ test('blogs are returned as json', async () => {
         .expect('Content-Type', /application\/json/)
 })
 
-test('all blogs are returned', async() =>{
+test('all blogs are returned', async () => {
     const response = await api.get('/api/blogs')
 
     assert.strictEqual(response.body.length, initialBlogs.length)
 })
 
-test('verify the unique identifier property of blogs is named id', async() =>{
+test('verify the unique identifier property of blogs is named id', async () => {
     const response = await api.get('/api/blogs')
     const blogs = response.body;
     let allHaveId = true
-    for(let blog of blogs){
-        if(!blog.hasOwnProperty('id')){
+    for (let blog of blogs) {
+        if (!blog.hasOwnProperty('id')) {
             allHaveId = false
             break
         }
     }
-     assert.strictEqual(allHaveId, true)
+    assert.strictEqual(allHaveId, true)
 
+})
+
+
+test('a valid blog can be added', async () => {
+
+    const newBlog = {
+        title: "My Journey from Upskilling to My First Code Contribution to Mozilla Firefox",
+        author: "Sameeksha",
+        url: "https://reactpatterns.com/",
+        likes: 7
+    }
+
+    await api
+    .post('/api/blogs')
+    .send(newBlog)
+    .expect(201)
+    .expect('Content-Type', /application\/json/)
+
+    const response = await api.get('/api/blogs')
+
+    const titles = response.body.map(r => r.title)
+
+    assert.strictEqual(response.body.length, initialBlogs.length + 1)
+    assert(titles.includes('My Journey from Upskilling to My First Code Contribution to Mozilla Firefox'))
 })
 
 after(async () => {
