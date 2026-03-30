@@ -13,11 +13,13 @@ blogsRouter.get('/', async (request, response) => {
 blogsRouter.post('/', async (request, response) => {
   const body = request.body
 
+  const likesValue = body.likes === undefined ? 0 : body.likes;
+
   const blog = new Blog({
     title: body.title,
     author: body.author,
     url: body.url,
-    likes: body.likes,
+    likes: likesValue,
   })
 
   // blog.save().then((result) => {

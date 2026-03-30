@@ -68,10 +68,10 @@ test('a valid blog can be added', async () => {
     }
 
     await api
-    .post('/api/blogs')
-    .send(newBlog)
-    .expect(201)
-    .expect('Content-Type', /application\/json/)
+        .post('/api/blogs')
+        .send(newBlog)
+        .expect(201)
+        .expect('Content-Type', /application\/json/)
 
     const response = await api.get('/api/blogs')
 
@@ -80,6 +80,27 @@ test('a valid blog can be added', async () => {
     assert.strictEqual(response.body.length, initialBlogs.length + 1)
     assert(titles.includes('My Journey from Upskilling to My First Code Contribution to Mozilla Firefox'))
 })
+
+test('verify likes property default set to 0', async () => {
+    const newBlog = {
+        title: "Blog wihtout likes",
+        author: "Sameeksha",
+        url: "https://reactpatterns.com/"
+    }
+
+    await api
+        .post('/api/blogs')
+        .send(newBlog)
+        .expect(201)
+        .expect('Content-Type', /application\/json/)
+
+    const response = await api.get('/api/blogs')
+
+    const createdBlog  = response.body.find(blog => blog.title === "Blog wihtout likes")
+
+    assert.strictEqual(createdBlog.likes, 0)
+})
+
 
 after(async () => {
     await mongoose.connection.close()
