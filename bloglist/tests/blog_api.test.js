@@ -102,6 +102,19 @@ test('verify likes property default set to 0', async () => {
 })
 
 
+test('verify if title or url are missing it responsed with 400 Bad Request', async () => {
+    const newBlog = {
+        author: "Sameeksha",
+        likes: 7
+    }
+
+    await api
+        .post('/api/blogs')
+        .send(newBlog)
+        .expect(400)
+
+})
+
 after(async () => {
     await mongoose.connection.close()
 })
