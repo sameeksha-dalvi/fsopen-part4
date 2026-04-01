@@ -3,31 +3,16 @@ const { test, after, beforeEach } = require('node:test');
 const mongoose = require('mongoose')
 const supertest = require('supertest')
 const app = require('../app')
+const helper = require('./test_helper')
 const Blog = require('../models/blog')
 
 const api = supertest(app)
 
-const initialBlogs = [
-    {
-        title: "React patterns",
-        author: "Michael Chan",
-        url: "https://reactpatterns.com/",
-        likes: 7,
-    },
-    {
-        title: "Go To Statement Considered Harmful",
-        author: "Edsger W. Dijkstra",
-        url: "http://www.u.arizona.edu/~rubinson/copyright_violations/Go_To_Considered_Harmful.html",
-        likes: 5
-    }
-]
+
 
 beforeEach(async () => {
-    await Blog.deleteMany({})
-    let blogObject = new Blog(initialBlogs[0])
-    await blogObject.save()
-    blogObject = new Blog(initialBlogs[1])
-    await blogObject.save()
+  await Blog.deleteMany({})
+  await Blog.insertMany(helper.initialBlogs)
 })
 
 test('blogs are returned as json', async () => {
@@ -40,7 +25,7 @@ test('blogs are returned as json', async () => {
 test('all blogs are returned', async () => {
     const response = await api.get('/api/blogs')
 
-    assert.strictEqual(response.body.length, initialBlogs.length)
+    assert.strictEqual(response.body.length, helper.initialBlogs.length)
 })
 
 test('verify the unique identifier property of blogs is named id', async () => {
@@ -77,7 +62,7 @@ test('a valid blog can be added', async () => {
 
     const titles = response.body.map(r => r.title)
 
-    assert.strictEqual(response.body.length, initialBlogs.length + 1)
+    assert.strictEqual(response.body.length, helper.initialBlogs.length + 1)
     assert(titles.includes('My Journey from Upskilling to My First Code Contribution to Mozilla Firefox'))
 })
 
