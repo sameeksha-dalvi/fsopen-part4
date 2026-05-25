@@ -24,6 +24,6 @@ mongoose
 app.use(express.json())
 
 app.use('/api/blogs', blogsRouter)
-app.use('/api/blogs', usersRouter)
+app.use('/api/users', usersRouter)
 
 module.exports = app
