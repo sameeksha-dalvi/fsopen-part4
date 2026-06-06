@@ -1,18 +1,20 @@
 const assert = require('node:assert')
-const { test, after, beforeEach } = require('node:test');
+const { test, after, beforeEach, describe } = require('node:test');
 const mongoose = require('mongoose')
 const supertest = require('supertest')
 const app = require('../app')
 const helper = require('./test_helper')
 const Blog = require('../models/blog')
+const bcrypt = require('bcrypt')
+const User = require('../models/user')
 
 const api = supertest(app)
 
 
 
 beforeEach(async () => {
-  await Blog.deleteMany({})
-  await Blog.insertMany(helper.initialBlogs)
+    await Blog.deleteMany({})
+    await Blog.insertMany(helper.initialBlogs)
 })
 
 test('blogs are returned as json', async () => {
@@ -81,7 +83,7 @@ test('verify likes property default set to 0', async () => {
 
     const response = await api.get('/api/blogs')
 
-    const createdBlog  = response.body.find(blog => blog.title === "Blog wihtout likes")
+    const createdBlog = response.body.find(blog => blog.title === "Blog wihtout likes")
 
     assert.strictEqual(createdBlog.likes, 0)
 })
@@ -100,13 +102,13 @@ test('verify if title or url are missing it responsed with 400 Bad Request', asy
 
 })
 
-test('a blog can be deleted', async() => {
+test('a blog can be deleted', async () => {
     const blogsAtStart = await helper.blogsInDb()
     const blogToDelete = blogsAtStart[0]
 
     await api
-    .delete(`/api/blogs/${blogToDelete.id}`)
-    .expect(204)
+        .delete(`/api/blogs/${blogToDelete.id}`)
+        .expect(204)
 
     const blogsAtEnd = await helper.blogsInDb()
     const ids = blogsAtEnd.map(b => b.id)
@@ -117,25 +119,124 @@ test('a blog can be deleted', async() => {
 
 
 test('a blog likes can be updated', async () => {
-  const blogsAtStart = await api.get('/api/blogs')
-  const blogToUpdate = blogsAtStart.body[0]
+    const blogsAtStart = await api.get('/api/blogs')
+    const blogToUpdate = blogsAtStart.body[0]
 
-  const updatedBlog = {
-    title: blogToUpdate.title,
-    author: blogToUpdate.author,
-    url: blogToUpdate.url,
-    likes: blogToUpdate.likes + 1
-  }
+    const updatedBlog = {
+        title: blogToUpdate.title,
+        author: blogToUpdate.author,
+        url: blogToUpdate.url,
+        likes: blogToUpdate.likes + 1
+    }
 
-  await api
-    .put(`/api/blogs/${blogToUpdate.id}`)
-    .send(updatedBlog)
-    .expect(200)
+    await api
+        .put(`/api/blogs/${blogToUpdate.id}`)
+        .send(updatedBlog)
+        .expect(200)
 
-  const blogsAtEnd = await api.get('/api/blogs')
-  const result = blogsAtEnd.body.find(b => b.id === blogToUpdate.id)
+    const blogsAtEnd = await api.get('/api/blogs')
+    const result = blogsAtEnd.body.find(b => b.id === blogToUpdate.id)
 
-  assert.strictEqual(result.likes, blogToUpdate.likes + 1)
+    assert.strictEqual(result.likes, blogToUpdate.likes + 1)
+})
+
+describe('when there is initially one user in database', () => {
+
+    beforeEach(async () => {
+        await User.deleteMany({})
+
+        const passwordHash = await bcrypt.hash('sekret', 10)
+        const user = new User({ username: 'root', passwordHash })
+
+        await user.save()
+    })
+
+    test('creation succeeds with a fresh username', async () => {
+        const usersAtStart = await helper.usersInDB()
+
+        const newUser = {
+            username: 'mani',
+            name: 'Mani T',
+            password: 'bangda'
+        }
+
+        await api
+            .post('/api/users')
+            .send(newUser)
+            .expect(201)
+            .expect('Content-Type', /application\/json/)
+
+        const usersAtEnd = await helper.usersInDB()
+        assert.strictEqual(usersAtEnd.length, usersAtStart.length + 1)
+
+        const usernames = usersAtEnd.map(u => u.username)
+        assert(usernames.includes(newUser.username))
+    })
+
+    test('user creation fails with proper statuscode and message if username is already taken', async () => {
+
+        const usersAtStart = await helper.usersInDB()
+
+        const newUser = {
+            username: 'root',
+            name: 'Superuser',
+            password: 'salainen',
+        }
+
+        const result = await api
+            .post('/api/users')
+            .send(newUser)
+            .expect(400)
+            .expect('Content-Type', /application\/json/)
+
+        const usersAtEnd = await helper.usersInDB()
+        assert(result.body.error.includes('expected `username` to be unique'))
+
+        assert.strictEqual(usersAtEnd.length, usersAtStart.length)
+
+
+    })
+
+    test('user creation fails if username is less than 3 char', async () => {
+        const usersAtStart = await helper.usersInDB()
+
+        const newUser = {
+            username: 'ab',
+            name: 'Too Short',
+            password: 'validpass'
+        }
+
+        const result = await api
+            .post('/api/users')
+            .send(newUser)
+            .expect(400)
+            .expect('Content-Type', /application\/json/)
+
+        assert(result.body.error.includes('username'))
+        const usersAtEnd = await helper.usersInDB()
+        assert.strictEqual(usersAtEnd.length, usersAtStart.length)
+    })
+
+    test('user creation fails if password is too short', async () => {
+        const usersAtStart = await helper.usersInDB()
+
+        const newUser = {
+            username: 'validuser',
+            name: 'No Password',
+            password: 'ab'
+        }
+
+        const result = await api
+            .post('/api/users')
+            .send(newUser)
+            .expect(400)
+            .expect('Content-Type', /application\/json/)
+
+        assert(result.body.error.includes('password'))
+
+        const usersAtEnd = await helper.usersInDB()
+        assert.strictEqual(usersAtEnd.length, usersAtStart.length)
+    })
 })
 
 after(async () => {
