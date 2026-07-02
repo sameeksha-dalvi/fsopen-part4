@@ -2,4 +2,4 @@ POST http://localhost:3003/api/blogs
 content-type: application/json
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Im1hbmkiLCJpZCI6IjZhNDNiY2Q2NjQ0MWQ5YmMxMDgyYWRlMSIsImlhdCI6MTc4MjgyNDE3Mn0.MIyF9Gc_0H4LUK2e5VunMdHbaXLdPRHl35nONC5CkUw
 
-{ "title": "Blog List 25", "author": "Sameeksha", "url": "abc", "likes": 4, "userId":"6a200dd2a73106d8c3dcbbbb" }
+{ "title": "Blog List 2 July", "author": "Mani", "url": "abc", "likes": 4, "userId":"idk" }
