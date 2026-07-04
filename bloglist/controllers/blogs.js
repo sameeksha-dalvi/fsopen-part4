@@ -4,7 +4,7 @@ const Blog = require('../models/blog')
 const User = require('../models/user')
 
 const jwt = require('jsonwebtoken')
-
+const { userExtractor } = require('../utils/middleware')
 // const getTokenFrom = request =>{
 //   const authorization = request.get('authorization')
 //   if(authorization && authorization.startsWith('Bearer ')){
@@ -22,16 +22,16 @@ blogsRouter.get('/', async (request, response) => {
   response.json(blogs)
 })
 
-blogsRouter.post('/', async (request, response) => {
+blogsRouter.post('/', userExtractor, async (request, response) => {
   const body = request.body
 
-  const decodeToken = jwt.verify(request.token, process.env.SECRET)
+  // const decodeToken = jwt.verify(request.token, process.env.SECRET)
 
-  if (!decodeToken.id) {
-    return response.status(401).json({ error: 'token invalid' })
-  }
+  // if (!decodeToken.id) {
+  //   return response.status(401).json({ error: 'token invalid' })
+  // }
 
-  const user = await User.findById(decodeToken.id)
+  const user = request.user;
 
   if (!user) {
     return response.status(400).json({ error: 'userId missing or not valid' })
@@ -59,12 +59,12 @@ blogsRouter.post('/', async (request, response) => {
   response.status(201).json(savedBlog)
 })
 
-blogsRouter.delete('/:id', async (request, response) => {
+blogsRouter.delete('/:id', userExtractor,async (request, response) => {
 
-  const decodeToken = jwt.verify(request.token, process.env.SECRET)
-  if (!decodeToken.id) {
-    return response.status(401).json({ error: 'token invalid cannot delete blog' })
-  }
+  // const decodeToken = jwt.verify(request.token, process.env.SECRET)
+  // if (!decodeToken.id) {
+  //   return response.status(401).json({ error: 'token invalid cannot delete blog' })
+  // }
 
   const blog = await Blog.findById(request.params.id)
 
@@ -73,7 +73,7 @@ blogsRouter.delete('/:id', async (request, response) => {
   }
 
 
-  if (blog.user.toString() === decodeToken.id.toString()) {
+  if (blog.user.toString() === request.user.id.toString()) {
     await Blog.findByIdAndDelete(request.params.id)
     response.status(204).end()
   } else {
