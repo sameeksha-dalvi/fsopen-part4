@@ -59,7 +59,7 @@ blogsRouter.post('/', userExtractor, async (request, response) => {
   response.status(201).json(savedBlog)
 })
 
-blogsRouter.delete('/:id', userExtractor,async (request, response) => {
+blogsRouter.delete('/:id', userExtractor, async (request, response) => {
 
   // const decodeToken = jwt.verify(request.token, process.env.SECRET)
   // if (!decodeToken.id) {
@@ -72,6 +72,8 @@ blogsRouter.delete('/:id', userExtractor,async (request, response) => {
     return response.status(404).json({ error: 'blog not found' })
   }
 
+  console.log(blog)
+  console.log(request.user)
 
   if (blog.user.toString() === request.user.id.toString()) {
     await Blog.findByIdAndDelete(request.params.id)
