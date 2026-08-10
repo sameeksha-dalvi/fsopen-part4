@@ -100,6 +100,8 @@ blogsRouter.put('/:id', async (request, response) => {
   if (user !== undefined) blog.user = user;
 
   const updatedBlog = await blog.save()
+
+  await updatedBlog.populate('user')
   response.json(updatedBlog)
 
 })
